@@ -31,13 +31,20 @@ require("dotenv").config();
   await page.goto("https://thatsmybis.com/");
   await page.click("img.discord-link");
   await page.waitForNavigation();
-  // Access the export page
-  await page.goto(process.env.EXPORT_URL);
-  await page.screenshot({ path: "temp/tmb-1.png" });
+  // Access the export data page
+  await page.goto(process.env.EXPORT_DATA_URL);
+  await page.screenshot({ path: "temp/tmb-data.png" });
   // Save the JSON contents from the body to a local file
-  const body = await page.$("body");
-  const json = await page.evaluate((el) => el.innerText, body);
-  fs.writeFileSync("temp/tmb-data.json", json);
+  const dataBody = await page.$("body");
+  const dataJson = await page.evaluate((el) => el.innerText, dataBody);
+  fs.writeFileSync("temp/tmb-data.json", dataJson);
+  // Access the export items page
+  await page.goto(process.env.EXPORT_ITEMS_URL);
+  await page.screenshot({ path: "temp/tmb-items.png" });
+  // Save the JSON contents from the body to a local file
+  const itemsBody = await page.$("body");
+  const itemsCsv = await page.evaluate((el) => el.innerText, itemsBody);
+  fs.writeFileSync("temp/tmb-items.csv", itemsCsv);
 
   await browser.close();
 })();
