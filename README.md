@@ -9,6 +9,9 @@ This file is run as a windows task to keep the site up to date.
 To run, create a `.env` file and set the following:
 
 ```
-DISCORD_TOKEN=
-EXPORT_URL=https://thatsmybis.com/YOUR/GUILD/PATH/export/characters-with-items/html
+DISCORD_TOKEN=...
+EXPORT_DATA_URL=https://thatsmybis.com/YOUR/GUILD/PATH/export/characters-with-items/html
+EXPORT_ITEMS_URL=https://thatsmybis.com/YOUR/GUILD/PATH/export/item-notes/html
 ```
+
+Each `EXPORT_.._URL` key is optional. If it is missing, that export won't occur.
