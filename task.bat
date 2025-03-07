@@ -2,6 +2,7 @@
 node src/app.js
 @REM clone the site github pages repo (or pull if it exists)
 git -C repo pull || git clone https://github.com/bffs-wow/loot.git repo 
+@REM git -C repo pull || git clone https://github.com/bffs-wow/firelands.git repo 
 cd repo
 git checkout gh-pages
 

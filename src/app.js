@@ -38,7 +38,13 @@ require("dotenv").config();
     // Save the JSON contents from the body to a local file
     const dataBody = await page.$("body");
     const dataJson = await page.evaluate((el) => el.innerText, dataBody);
-    fs.writeFileSync("temp/tmb-data.json", dataJson);
+    const jsonObj = JSON.parse(dataJson);
+    const finalData = {
+      data: jsonObj,
+      // Add the current date to the json data so the app can render it
+      imported: new Date().toISOString(),
+    };
+    fs.writeFileSync("temp/tmb-data.json", JSON.stringify(finalData));
   }
   if (process.env.EXPORT_ITEMS_URL) {
     // Access the export items page
