@@ -3,24 +3,28 @@ const fs = require("fs");
 const yaml = require("js-yaml");
 const path = require("path");
 
-// Load configuration from config.yaml
 const configPath = path.resolve(__dirname, "..", "config.yaml");
 const config = yaml.load(fs.readFileSync(configPath, "utf8"));
 
 (async () => {
+  console.log("🚀 Starting TMB Import...");
+  console.log(
+    `🔑 Using Token: ${config.DISCORD_TOKEN.substring(0, 10)}... (truncated)`,
+  );
+
   const browser = await puppeteer.launch({
-    executablePath: "/usr/bin/chromium-browser", // Match the path in the Dockerfile
-    headless: "new", // Use the modern headless mode
+    executablePath: "/usr/bin/chromium-browser",
+    headless: "new",
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage", // Important: prevents memory crashes in Docker
+      "--disable-dev-shm-usage",
     ],
   });
+
   const page = await browser.newPage();
 
-  // --- ADD THIS BLOCK ---
-  // This prevents Discord from overriding localStorage and allows our token to stay
+  // Setup localStorage protection
   await page.evaluateOnNewDocument(() => {
     const originalLocalStorage = window.localStorage;
     Object.defineProperty(window, "localStorage", {
@@ -29,74 +33,98 @@ const config = yaml.load(fs.readFileSync(configPath, "utf8"));
       enumerable: true,
     });
   });
-  // ----------------------
 
-  await page.goto("https://discord.com/login");
+  console.log("🌐 Navigating to Discord Login page...");
+  await page.goto("https://discord.com/login", { waitUntil: "networkidle2" });
 
-  // evaluate will run the function in the page context
+  console.log("💉 Injecting Discord Token...");
   await page.evaluate((token) => {
-    // Clear any existing session and set the new one
     localStorage.clear();
     localStorage.setItem("token", `"${token}"`);
+    console.log("Internal Log: Token set in localStorage.");
   }, config.DISCORD_TOKEN);
 
-  // Important: Give Discord a second to "digest" the token before reloading
-  await new Promise((r) => setTimeout(r, 1000));
+  await new Promise((r) => setTimeout(r, 1500));
+
+  console.log("🔄 Reloading Discord to confirm session...");
   await page.reload({ waitUntil: "networkidle2" });
-  // The logged in discord session above will carry over to TMB
+
+  // Debug: Verify if we are actually logged in
+  const localStorageToken = await page.evaluate(() =>
+    localStorage.getItem("token"),
+  );
+  console.log(`Verify: localStorage token exists? ${!!localStorageToken}`);
+
+  console.log("🎯 Navigating to ThatsMyBis...");
   await page.goto("https://thatsmybis.com/", { waitUntil: "networkidle2" });
 
-  // Click the login button
-  await page.click("img.discord-link");
+  console.log("🖱 Clicking Discord Login button on TMB...");
+  const discordBtn = await page.$("img.discord-link");
+  if (discordBtn) {
+    await discordBtn.click();
+  } else {
+    console.error("❌ Could not find Discord login image/button!");
+    await page.screenshot({ path: "temp/missing-btn.png" });
+  }
 
-  // Discord might show an "Authorize" button if it's the first time
-  // We wait for either the TMB dashboard OR the Discord Authorize button
   try {
-    await page.waitForSelector('button[type="button"]', { timeout: 5000 }); // Look for Discord's 'Authorize' button
+    console.log("⏳ Waiting for potential Discord Authorization...");
+    await page.waitForSelector('button[type="button"]', { timeout: 8000 });
     const buttons = await page.$$('button[type="button"]');
     for (let button of buttons) {
       const text = await page.evaluate((el) => el.textContent, button);
       if (text.includes("Authorize")) {
+        console.log("✅ Found and Clicking 'Authorize' button.");
         await button.click();
         break;
       }
     }
   } catch (e) {
-    // If no authorize button appears, we might already be logged in/redirected
-    console.log("No authorization button needed or found.");
+    console.log(
+      "ℹ️ No 'Authorize' button found - assuming auto-redirect or already logged in.",
+    );
   }
 
-  // Final wait to ensure we are back on TMB and logged in
-  await page.waitForNavigation({ waitUntil: "networkidle2" });
+  console.log("⌛ Waiting for TMB redirect to settle...");
+  await page
+    .waitForNavigation({ waitUntil: "networkidle2" })
+    .catch(() => console.log("Navigation wait timed out/settled early."));
+
+  console.log(`📍 Current URL: ${page.url()}`);
 
   if (config.EXPORT_DATA_URL) {
-    await page.goto(config.EXPORT_DATA_URL);
+    console.log(`📥 Fetching Data Export: ${config.EXPORT_DATA_URL}`);
+    await page.goto(config.EXPORT_DATA_URL, { waitUntil: "networkidle2" });
     const dataBody = await page.$("body");
     const dataJson = await page.evaluate((el) => el.innerText, dataBody);
 
     try {
+      console.log("🧩 Attempting to parse JSON data...");
       const jsonObj = JSON.parse(dataJson);
       const finalData = {
         data: jsonObj,
         imported: new Date().toISOString(),
       };
       fs.writeFileSync("temp/tmb-data.json", JSON.stringify(finalData));
+      console.log("💾 Successfully saved tmb-data.json");
     } catch (parseError) {
+      console.error("❌ PARSE ERROR: The content received was not valid JSON.");
+      console.log(`📄 Snippet of content: "${dataJson.substring(0, 50)}..."`);
       await page.screenshot({ path: "temp/error-debug.png" });
-      console.error(
-        "FAILED TO PARSE JSON. Check temp/error-debug.png to see what page loaded instead.",
-      );
+      console.log("📸 Saved error-debug.png for visual inspection.");
       throw parseError;
     }
   }
+
   if (config.EXPORT_ITEMS_URL) {
-    // Access the export items page
-    await page.goto(config.EXPORT_ITEMS_URL);
-    await page.screenshot({ path: "temp/tmb-items.png" });
-    // Save the JSON contents from the body to a local file
+    console.log(`📥 Fetching Items Export: ${config.EXPORT_ITEMS_URL}`);
+    await page.goto(config.EXPORT_ITEMS_URL, { waitUntil: "networkidle2" });
     const itemsBody = await page.$("body");
     const itemsCsv = await page.evaluate((el) => el.innerText, itemsBody);
     fs.writeFileSync("temp/tmb-items.csv", itemsCsv);
+    console.log("💾 Successfully saved tmb-items.csv");
   }
+
+  console.log("🏁 Process complete. Closing browser.");
   await browser.close();
 })();
