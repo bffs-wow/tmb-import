@@ -1,6 +1,10 @@
 # Example configuration file for tmb-import
 # Copy this file to config.yaml and fill in your sensitive values.
 
+# Git Identity for Automated Commits
+GIT_USER_EMAIL: "someone@example.com"
+GIT_USER_NAME: "Someone"
+
 # Discord bot token for authentication with Discord
 DISCORD_TOKEN: "YOUR_DISCORD_TOKEN_HERE"
 

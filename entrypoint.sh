@@ -3,12 +3,18 @@
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
-# Run the main application
+# Run the main application (Puppeteer/Node)
 node src/app.js
 
-# Git configuration (optional, if you want to commit from within the container)
-# git config --global user.email "your-email@example.com"
-# git config --global user.name "Your Name"
+# --- Extract Git Config from YAML ---
+# This looks for the key, grabs the part between double quotes
+GIT_EMAIL=$(grep "GIT_USER_EMAIL:" config.yaml | cut -d '"' -f 2)
+GIT_NAME=$(grep "GIT_USER_NAME:" config.yaml | cut -d '"' -f 2)
+
+# Apply the Git configuration extracted from YAML
+echo "Setting Git identity to: $GIT_NAME <$GIT_EMAIL>"
+git config --global user.email "$GIT_EMAIL"
+git config --global user.name "$GIT_NAME"
 
 # Define the repo directory
 REPO_DIR="repo"
