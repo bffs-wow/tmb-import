@@ -3,6 +3,9 @@
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
+# Run the main application
+node src/app.js
+
 # Git configuration (optional, if you want to commit from within the container)
 # git config --global user.email "your-email@example.com"
 # git config --global user.name "Your Name"
@@ -32,6 +35,3 @@ cp ../temp/tmb-data.json assets/tmb-data.json
 git add .
 git commit -m "Automated tmb data import"
 git push origin
-
-# Run the main application
-node src/app.js
