@@ -8,7 +8,15 @@ const configPath = path.resolve(__dirname, "..", "config.yaml");
 const config = yaml.load(fs.readFileSync(configPath, "utf8"));
 
 (async () => {
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+    executablePath: "/usr/bin/chromium-browser", // Match the path in the Dockerfile
+    headless: "new", // Use the modern headless mode
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage", // Important: prevents memory crashes in Docker
+    ],
+  });
   const page = await browser.newPage();
   await page.goto("https://discord.com/");
 
