@@ -8,7 +8,9 @@ git checkout gh-pages
 
 @REM copy the downloaded data into the repo
 copy ..\temp\tmb-data.json assets\tmb-data.json
-copy ..\temp\tmb-items.csv assets\tmb-items.csv
+
+@REM uncomment the below to copy the items CSV if needed
+@REM copy ..\temp\tmb-items.csv assets\tmb-items.csv
 
 @REM commit & push
 git add .

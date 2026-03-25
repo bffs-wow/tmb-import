@@ -1,0 +1,11 @@
+# Example configuration file for tmb-import
+# Copy this file to config.yaml and fill in your sensitive values.
+
+# Discord bot token for authentication with Discord
+DISCORD_TOKEN: "YOUR_DISCORD_TOKEN_HERE"
+
+# URL for exporting TMB data (JSON format)
+EXPORT_DATA_URL: "https://thatsmybis.com/22344/best-friends/export/characters-with-items/html"
+
+# URL for exporting TMB items (CSV format, optional)
+# EXPORT_ITEMS_URL: "https://thatsmybis.com/19497/best-friends/export/item-notes/html"

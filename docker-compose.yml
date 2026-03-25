@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  tmb-import:
+    build: .
+    container_name: tmb-import
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./repo:/app/repo
+      - ./temp:/app/temp
+    # If you need to debug issues, uncomment the following to keep the container running
+    # tty: true
+    # stdin_open: true
+    # entrypoint: sh
+    # If you need to provide SSH keys for Git operations, uncomment and configure the following:
+    # environment:
+    #   - GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i /app/ssh_keys/id_rsa"
+    # volumes:
+    #   - ~/.ssh:/app/ssh_keys:ro # Mount your SSH keys from your host machine
