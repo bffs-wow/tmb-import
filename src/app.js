@@ -3,28 +3,36 @@ const fs = require("fs");
 const yaml = require("js-yaml");
 const path = require("path");
 
+// Load configuration
 const configPath = path.resolve(__dirname, "..", "config.yaml");
 const config = yaml.load(fs.readFileSync(configPath, "utf8"));
 
 (async () => {
-  console.log("🚀 Starting TMB Import...");
-  console.log(
-    `🔑 Using Token: ${config.DISCORD_TOKEN.substring(0, 10)}... (truncated)`,
-  );
+  console.log("🚀 Starting TMB Import (Persistent Session Mode)...");
 
   const browser = await puppeteer.launch({
     executablePath: "/usr/bin/chromium-browser",
     headless: "new",
+    // --- PERSISTENCE: This saves your login so Discord doesn't see a 'New Login' every 15m ---
+    userDataDir: "./user_data",
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
+      // --- STEALTH: Hide the fact that this is a bot ---
+      "--disable-blink-features=AutomationControlled",
+      "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     ],
   });
 
   const page = await browser.newPage();
 
-  // Setup localStorage protection
+  // Extra Stealth: patch the navigator.webdriver property
+  await page.evaluateOnNewDocument(() => {
+    Object.defineProperty(navigator, "webdriver", { get: () => false });
+  });
+
+  // Setup localStorage protection (only needed if we aren't already logged in)
   await page.evaluateOnNewDocument(() => {
     const originalLocalStorage = window.localStorage;
     Object.defineProperty(window, "localStorage", {
@@ -34,97 +42,85 @@ const config = yaml.load(fs.readFileSync(configPath, "utf8"));
     });
   });
 
-  console.log("🌐 Navigating to Discord Login page...");
+  console.log("🌐 Checking Discord session...");
   await page.goto("https://discord.com/login", { waitUntil: "networkidle2" });
 
-  console.log("💉 Injecting Discord Token...");
-  await page.evaluate((token) => {
-    localStorage.clear();
-    localStorage.setItem("token", `"${token}"`);
-    console.log("Internal Log: Token set in localStorage.");
-  }, config.DISCORD_TOKEN);
+  // Check if we are already logged in from a previous session
+  const isLoginPage = page.url().includes("login");
 
-  await new Promise((r) => setTimeout(r, 1500));
+  if (isLoginPage) {
+    console.log("💉 Session expired or not found. Injecting Token...");
+    await page.evaluate((token) => {
+      localStorage.clear();
+      localStorage.setItem("token", `"${token}"`);
+    }, config.DISCORD_TOKEN);
 
-  console.log("🔄 Reloading Discord to confirm session...");
-  await page.reload({ waitUntil: "networkidle2" });
-
-  // Debug: Verify if we are actually logged in
-  const localStorageToken = await page.evaluate(() =>
-    localStorage.getItem("token"),
-  );
-  console.log(`Verify: localStorage token exists? ${!!localStorageToken}`);
+    await new Promise((r) => setTimeout(r, 2000));
+    await page.reload({ waitUntil: "networkidle2" });
+  } else {
+    console.log("✅ Already logged in via persistent user_data.");
+  }
 
   console.log("🎯 Navigating to ThatsMyBis...");
   await page.goto("https://thatsmybis.com/", { waitUntil: "networkidle2" });
 
-  console.log("🖱 Clicking Discord Login button on TMB...");
   const discordBtn = await page.$("img.discord-link");
   if (discordBtn) {
+    console.log("🖱 Clicking Discord Login...");
     await discordBtn.click();
-  } else {
-    console.error("❌ Could not find Discord login image/button!");
-    await page.screenshot({ path: "temp/missing-btn.png" });
   }
 
   try {
-    console.log("⏳ Waiting for potential Discord Authorization...");
-    await page.waitForSelector('button[type="button"]', { timeout: 8000 });
+    // Wait for either the Authorize button OR the redirect back to TMB
+    await page.waitForSelector('button[type="button"]', { timeout: 5000 });
     const buttons = await page.$$('button[type="button"]');
     for (let button of buttons) {
       const text = await page.evaluate((el) => el.textContent, button);
       if (text.includes("Authorize")) {
-        console.log("✅ Found and Clicking 'Authorize' button.");
+        console.log("✅ Clicking Discord 'Authorize'...");
         await button.click();
         break;
       }
     }
   } catch (e) {
-    console.log(
-      "ℹ️ No 'Authorize' button found - assuming auto-redirect or already logged in.",
-    );
+    console.log("ℹ️ No 'Authorize' button - proceeding.");
   }
 
-  console.log("⌛ Waiting for TMB redirect to settle...");
-  await page
-    .waitForNavigation({ waitUntil: "networkidle2" })
-    .catch(() => console.log("Navigation wait timed out/settled early."));
-
-  console.log(`📍 Current URL: ${page.url()}`);
+  await page.waitForNavigation({ waitUntil: "networkidle2" }).catch(() => {});
 
   if (config.EXPORT_DATA_URL) {
-    console.log(`📥 Fetching Data Export: ${config.EXPORT_DATA_URL}`);
+    console.log(`📥 Fetching Data: ${config.EXPORT_DATA_URL}`);
     await page.goto(config.EXPORT_DATA_URL, { waitUntil: "networkidle2" });
     const dataBody = await page.$("body");
     const dataJson = await page.evaluate((el) => el.innerText, dataBody);
 
     try {
-      console.log("🧩 Attempting to parse JSON data...");
       const jsonObj = JSON.parse(dataJson);
-      const finalData = {
-        data: jsonObj,
-        imported: new Date().toISOString(),
-      };
-      fs.writeFileSync("temp/tmb-data.json", JSON.stringify(finalData));
-      console.log("💾 Successfully saved tmb-data.json");
-    } catch (parseError) {
-      console.error("❌ PARSE ERROR: The content received was not valid JSON.");
-      console.log(`📄 Snippet of content: "${dataJson.substring(0, 50)}..."`);
+      fs.writeFileSync(
+        "temp/tmb-data.json",
+        JSON.stringify({
+          data: jsonObj,
+          imported: new Date().toISOString(),
+        }),
+      );
+      console.log("💾 saved tmb-data.json");
+    } catch (err) {
       await page.screenshot({ path: "temp/error-debug.png" });
-      console.log("📸 Saved error-debug.png for visual inspection.");
-      throw parseError;
+      console.error("❌ Failed to parse JSON. Check temp/error-debug.png");
+      throw err;
     }
   }
 
+  // Handle Items URL if present
   if (config.EXPORT_ITEMS_URL) {
-    console.log(`📥 Fetching Items Export: ${config.EXPORT_ITEMS_URL}`);
+    console.log("📥 Fetching Items CSV...");
     await page.goto(config.EXPORT_ITEMS_URL, { waitUntil: "networkidle2" });
     const itemsBody = await page.$("body");
     const itemsCsv = await page.evaluate((el) => el.innerText, itemsBody);
     fs.writeFileSync("temp/tmb-items.csv", itemsCsv);
-    console.log("💾 Successfully saved tmb-items.csv");
+    console.log("💾 saved tmb-items.csv");
   }
 
-  console.log("🏁 Process complete. Closing browser.");
+  console.log("🏁 Done. Closing browser.");
   await browser.close();
 })();

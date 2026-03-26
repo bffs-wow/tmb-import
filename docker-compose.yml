@@ -4,7 +4,7 @@ services:
     container_name: tmb-import
     environment:
       - GIT_SSH_COMMAND=ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i /app/ssh_keys/id_ed25519
-      # ADD THIS LINE:
+      # Git configuration to allow the container to access the repository without permission issues
       - GIT_CONFIG_COUNT=1
       - GIT_CONFIG_KEY_0=safe.directory
       - GIT_CONFIG_VALUE_0=/app/repo
@@ -12,4 +12,5 @@ services:
       - ./config.yaml:/app/config.yaml:ro
       - ./repo:/app/repo
       - ./temp:/app/temp
+      - ./user_data:/app/user_data
       - /home/sean/.ssh:/app/ssh_keys:ro
