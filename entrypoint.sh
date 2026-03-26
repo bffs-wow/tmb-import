@@ -1,4 +1,17 @@
 #!/bin/sh
+LOCKFILE="/app/temp/tmb.lock"
+
+# Check if lockfile exists
+if [ -f "$LOCKFILE" ]; then
+  echo "⚠️ Another import is already running. Exiting to avoid profile conflict."
+  exit 0
+fi
+
+# Create the lockfile
+touch "$LOCKFILE"
+
+# Ensure the lockfile is deleted even if the script crashes
+trap 'rm -f "$LOCKFILE"; exit' INT TERM EXIT
 
 # Exit immediately if a command exits with a non-zero status.
 set -e
