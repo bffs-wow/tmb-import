@@ -9,9 +9,7 @@ const config = yaml.load(fs.readFileSync(configPath, "utf8"));
 
 // Helper function for timestamped logging
 const log = (msg) => {
-  const now = new Date().toLocaleString("en-US", {
-    timeZone: "America/New_York",
-  });
+  const now = new Date().toLocaleString("en-US"); // It will use the TZ env var
   console.log(`[${now}] ${msg}`);
 };
 
@@ -28,11 +26,15 @@ const log = (msg) => {
     executablePath: "/usr/bin/chromium-browser",
     headless: "new",
     userDataDir: "./user_data",
+    protocolTimeout: 240000, // 4 minutes
+    pipe: true, // Use pipes instead of WebSockets for more stability in Docker
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
       "--disable-blink-features=AutomationControlled",
+      "--disable-gpu", // Less overhead on your OptiPlex
+      "--no-first-run",
       "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     ],
   });

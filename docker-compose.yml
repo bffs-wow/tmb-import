@@ -3,8 +3,8 @@ services:
     build: .
     container_name: tmb-import
     environment:
+      - TZ=America/New_York
       - GIT_SSH_COMMAND=ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i /app/ssh_keys/id_ed25519
-      # Git configuration to allow the container to access the repository without permission issues
       - GIT_CONFIG_COUNT=1
       - GIT_CONFIG_KEY_0=safe.directory
       - GIT_CONFIG_VALUE_0=/app/repo

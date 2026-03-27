@@ -11,6 +11,12 @@ log "🧹 Cleaning up Chromium lock files..."
 rm -f /app/user_data/SingletonLock
 rm -f /app/user_data/SingletonCookie
 rm -f /app/user_data/SingletonSocket
+log "🧹 Pruning Chromium cache to prevent protocol timeouts..."
+# These folders are NOT needed for your login session but cause the 'Page.enable' hang
+rm -rf /app/user_data/Default/Cache/*
+rm -rf /app/user_data/Default/Code\ Cache/*
+rm -rf /app/user_data/Default/Service\ Worker/*
+rm -rf /app/user_data/Default/WebStorage/*
 
 # 2. Prevent overlapping runs (The Lockfile check)
 LOCKFILE="/app/temp/tmb-import.lock"
