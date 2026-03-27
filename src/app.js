@@ -9,6 +9,11 @@ const config = yaml.load(fs.readFileSync(configPath, "utf8"));
 
 (async () => {
   console.log("🚀 Starting TMB Import (Persistent Session Mode)...");
+  // Force the process to exit if it hangs for more than 5 minutes
+  setTimeout(() => {
+    console.error("⏰ Script timed out after 5 minutes. Force closing...");
+    process.exit(1);
+  }, 300000);
 
   const browser = await puppeteer.launch({
     executablePath: "/usr/bin/chromium-browser",

@@ -1,22 +1,25 @@
 #!/bin/sh
-LOCKFILE="/app/temp/tmb.lock"
-
-# Check if lockfile exists
-if [ -f "$LOCKFILE" ]; then
-  echo "⚠️ Another import is already running. Exiting to avoid profile conflict."
-  exit 0
-fi
-
-# Create the lockfile
-touch "$LOCKFILE"
-
-# Ensure the lockfile is deleted even if the script crashes
-trap 'rm -f "$LOCKFILE"; exit' INT TERM EXIT
-
-# Exit immediately if a command exits with a non-zero status.
 set -e
 
-# Run the main application (Puppeteer/Node)
+# 1. Clean up ANY leftover lock files from previous crashes
+# These are the specific files causing your "Profile in use" error
+echo "🧹 Cleaning up Chromium lock files..."
+rm -f /app/user_data/SingletonLock
+rm -f /app/user_data/SingletonCookie
+rm -f /app/user_data/SingletonSocket
+
+# 2. Prevent overlapping runs (The Lockfile check)
+LOCKFILE="/app/temp/tmb-import.lock"
+if [ -f "$LOCKFILE" ]; then
+    echo "⚠️ Another import is already running (Lockfile exists). Exiting."
+    exit 0
+fi
+
+touch "$LOCKFILE"
+# Ensure we remove our own lockfile even if the script fails
+trap 'rm -f "$LOCKFILE"; exit' INT TERM EXIT
+
+# 3. Run the App
 node src/app.js
 
 # --- Extract Git Config from YAML ---
