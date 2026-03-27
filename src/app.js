@@ -9,7 +9,9 @@ const config = yaml.load(fs.readFileSync(configPath, "utf8"));
 
 // Helper function for timestamped logging
 const log = (msg) => {
-  const now = new Date().toLocaleString("en-US"); // It will use the TZ env var
+  // .toISOString() always returns UTC (Z)
+  // We'll slice it to make it look like: [2026-03-27 14:30:00]
+  const now = new Date().toISOString().replace("T", " ").split(".")[0];
   console.log(`[${now}] ${msg}`);
 };
 

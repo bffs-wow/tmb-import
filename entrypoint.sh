@@ -3,7 +3,8 @@ set -e
 
 # Helper function to match the Node.js timestamp format
 log() {
-  echo "[$(date '+%m/%d/%Y, %I:%M:%S %p')] $1"
+  # The -u flag forces UTC output
+  echo "[$(date -u '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
 # 1. Clean up ANY leftover lock files from previous crashes
