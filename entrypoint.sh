@@ -45,14 +45,14 @@ git config --global user.name "$GIT_NAME"
 # Define the repo directory
 REPO_DIR="repo"
 
-# Clone the site github pages repo (or pull if it exists)
+# Always remove the repo directory to avoid corrupted state from previous runs
 if [ -d "$REPO_DIR" ]; then
-  log "🔄 Pulling existing repository..."
-  git -C "$REPO_DIR" pull
-else
-  log "🚚 Cloning repository..."
-  git clone https://github.com/bffs-wow/loot.git "$REPO_DIR"
+  log "🧹 Removing old repository directory to ensure a clean clone..."
+  rm -rf "$REPO_DIR"
 fi
+
+log "🚚 Cloning repository..."
+git clone https://github.com/bffs-wow/loot.git "$REPO_DIR"
 
 cd "$REPO_DIR"
 git checkout gh-pages
@@ -72,3 +72,8 @@ if [ -n "$(git status --porcelain)" ]; then
 else
     log "ℹ️ No changes detected in data. Skipping commit."
 fi
+
+# Clean up repo directory after successful execution
+cd ..
+log "🧹 Cleaning up repository directory..."
+rm -rf "$REPO_DIR"

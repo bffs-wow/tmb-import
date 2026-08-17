@@ -1,8 +1,12 @@
 @REM run the app - log into TMB and download JSON dump
 node src/app.js
-@REM clone the site github pages repo (or pull if it exists)
-git -C repo pull || git clone https://github.com/bffs-wow/loot.git repo 
-@REM git -C repo pull || git clone https://github.com/bffs-wow/firelands.git repo 
+
+@REM ensure clean slate by deleting any existing repo folder
+if exist repo rmdir /s /q repo
+
+@REM clone the site github pages repo
+git clone https://github.com/bffs-wow/loot.git repo
+@REM git clone https://github.com/bffs-wow/firelands.git repo
 cd repo
 git checkout gh-pages
 
@@ -16,6 +20,10 @@ copy ..\temp\tmb-data.json assets\tmb-data.json
 git add .
 git commit -m "Automated tmb data import"
 git push origin
+
+@REM clean up repo folder after successful execution
+cd ..
+if exist repo rmdir /s /q repo
 
 @REM Uncomment the below to debug issues, it will leave the cmd window open
 @REM pause
