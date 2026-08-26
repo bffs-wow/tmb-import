@@ -108,7 +108,7 @@ const log = (msg) => {
 
     try {
       const jsonObj = JSON.parse(dataJson);
-      fs.writeFileSync(
+      await fs.promises.writeFile(
         "temp/tmb-data.json",
         JSON.stringify({
           data: jsonObj,
@@ -128,7 +128,7 @@ const log = (msg) => {
     await page.goto(config.EXPORT_ITEMS_URL, { waitUntil: "networkidle2" });
     const itemsBody = await page.$("body");
     const itemsCsv = await page.evaluate((el) => el.innerText, itemsBody);
-    fs.writeFileSync("temp/tmb-items.csv", itemsCsv);
+    await fs.promises.writeFile("temp/tmb-items.csv", itemsCsv);
     log("💾 saved tmb-items.csv");
   }
 
