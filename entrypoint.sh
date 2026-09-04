@@ -45,10 +45,12 @@ git config --global user.name "$GIT_NAME"
 # Define the repo directory
 REPO_DIR="repo"
 
-# Always remove the repo directory to avoid corrupted state from previous runs
+# Always clean the repo directory to avoid corrupted state from previous runs.
+# The repo dir is a bind mount point (/app/repo), so it can't be removed —
+# empty it instead; git clone needs a clean/empty target either way.
 if [ -d "$REPO_DIR" ]; then
-  log "🧹 Removing old repository directory to ensure a clean clone..."
-  rm -rf "$REPO_DIR"
+  log "🧹 Emptying old repository directory to ensure a clean clone..."
+  find "$REPO_DIR" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
 fi
 
 log "🚚 Cloning repository..."
@@ -82,7 +84,7 @@ fi
 # Clean up repo directory after successful execution
 cd ..
 log "🧹 Cleaning up repository directory..."
-rm -rf "$REPO_DIR"
+rm -rf "$REPO_DIR"/.* "$REPO_DIR"/* 2>/dev/null || true
 
 # Notify Discord if the data payload changed (empty imports stay silent).
 # The import already succeeded at this point — a notification failure must not
