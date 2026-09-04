@@ -86,6 +86,7 @@ A cron entry has five time fields followed by the command to execute:
 **Important Notes:**
 
 - `--rm`: This flag will remove the container after it exits, keeping your system clean.
+- **Notifications:** If you set `DISCORD_WEBHOOK_URL` in the directory's `.env`, the import will post a Discord summary whenever the data changed. Docker Compose reads `.env` automatically.
 - Ensure the `docker compose` command is executable from your cron environment. You can find its path with `which docker compose`.
 - The `docker compose` command should be run from the directory containing `docker-compose.yml`, or you can specify the `-f` flag as shown above.
 - Cron jobs run with a minimal environment. If `docker compose` is not in the default PATH for cron, use its absolute path (e.g., `/usr/local/bin/docker compose`).

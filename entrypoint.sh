@@ -57,6 +57,12 @@ git clone https://github.com/bffs-wow/loot.git "$REPO_DIR"
 cd "$REPO_DIR"
 git checkout gh-pages
 
+# Keep a copy of the previously committed snapshot for the diff/notification step
+if [ -f assets/tmb-data.json ]; then
+  log "📸 Saving previous snapshot for diffing..."
+  cp assets/tmb-data.json ../temp/previous.json
+fi
+
 # Copy the downloaded data into the repo
 log "📂 Copying data to assets..."
 cp ../temp/tmb-data.json assets/tmb-data.json
@@ -77,3 +83,17 @@ fi
 cd ..
 log "🧹 Cleaning up repository directory..."
 rm -rf "$REPO_DIR"
+
+# Notify Discord if the data payload changed (empty imports stay silent).
+# The import already succeeded at this point — a notification failure must not
+# fail the run, so don't let set -e abort us.
+if [ -f temp/previous.json ] && [ -f temp/tmb-data.json ]; then
+    log "🔔 Checking for data changes to notify about..."
+    if node notify.js temp/tmb-data.json temp/previous.json; then
+        :
+    else
+        log "⚠️ Notification step exited with an error (data push already succeeded)."
+    fi
+else
+    log "ℹ️ No previous snapshot yet — skipping notification."
+fi

@@ -13,3 +13,8 @@ EXPORT_DATA_URL: "https://thatsmybis.com/22344/best-friends/export/characters-wi
 
 # URL for exporting TMB items (CSV format, optional)
 # EXPORT_ITEMS_URL: "https://thatsmybis.com/19497/best-friends/export/item-notes/html"
+
+# Discord webhook URL for post-import notifications.
+# Provided to the container via the DISCORD_WEBHOOK_URL environment variable
+# (homelab .env convention — never commit it). If unset, the import simply
+# skips the Discord notification.

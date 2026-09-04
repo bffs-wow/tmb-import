@@ -64,6 +64,15 @@ DISCORD_TOKEN: "YOUR_DISCORD_TOKEN_HERE"
 EXPORT_DATA_URL: "https://thatsmybis.com/22344/best-friends/export/characters-with-items/html"
 EXPORT_ITEMS_URL: "https://thatsmybis.com/your-items-url-here"
 
+   Create (or append to) a `.env` file in the same directory to pass the Discord
+   webhook URL used for post-import notifications:
+
+   ```bash
+   echo "DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/..." >> .env
+   ```
+
+   The import runs and publishes normally without it; notification is simply skipped.
+
 5. Docker Environment
 
    Ensure your docker-compose.yml is optimized for the headless environment and SSH passthrough.
