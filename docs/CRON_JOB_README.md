@@ -72,6 +72,21 @@ Add the following lines to the crontab. Replace `/opt/tmb-import` with the actua
 0 */2 10-23 * * * /usr/local/bin/docker compose -f /opt/tmb-import/docker-compose.yml run --rm tmb-import
 ```
 
+**Tuning for your raid schedule (Tue/Thu ~11:00–11:15pm):**
+
+Imports normally land right after raids on Tuesday and Thursday evenings (~11:00–11:15pm). To guarantee a run lands inside that window shortly after loot is added, tighten the Tue/Thu line so a run fires soon after 11:15pm while keeping the daily fallback:
+
+```cron
+# Run every 15 minutes on Tue/Thu 4pm–11:45pm, PLUS a guaranteed 11:15pm run
+*/15 16-23 * * Tue,Thu /usr/local/bin/docker compose -f /opt/tmb-import/docker-compose.yml run --rm tmb-import
+15 23 * * Tue,Thu /usr/local/bin/docker compose -f /opt/tmb-import/docker-compose.yml run --rm tmb-import
+
+# Daily fallback: every 2 hours 10am–11pm (prevents stale data on non-raid days)
+0 */2 10-23 * * * /usr/local/bin/docker compose -f /opt/tmb-import/docker-compose.yml run --rm tmb-import
+```
+
+The `15 23 * * Tue,Thu` line fires at **23:15 (11:15pm)** on Tuesdays and Thursdays, independent of the `*/15` line — so even if a raid runs long, there is a run shortly after 11pm to pick up the loot and post the Discord notification. The daily line keeps the export fresh on other days.
+
 **Explanation of Cron Syntax:**
 
 A cron entry has five time fields followed by the command to execute:
