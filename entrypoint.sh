@@ -45,6 +45,21 @@ git config --global user.name "$GIT_NAME"
 # Define the repo directory
 REPO_DIR="repo"
 
+# ssh-keys for github: loaded from host via docker-compose volume (/app/ssh_keys)
+SSH_URL="git@github.com:bffs-wow/loot.git"
+HTTPS_URL="https://github.com/bffs-wow/loot.git"
+
+clone_url() {
+  local url="$SSH_URL"
+  if [ -f /app/ssh_keys/id_ed25519 ]; then
+    url="$SSH_URL"
+  else
+    log "⚠️ No SSH key found at /app/ssh_keys/id_ed25519; falling back to HTTPS clone (push will need credentials)."
+    url="$HTTPS_URL"
+  fi
+  echo "$url"
+}
+
 # Always clean the repo directory to avoid corrupted state from previous runs.
 # The repo dir is a bind mount point (/app/repo), so it can't be removed —
 # empty it instead; git clone needs a clean/empty target either way.
@@ -54,7 +69,7 @@ if [ -d "$REPO_DIR" ]; then
 fi
 
 log "🚚 Cloning repository..."
-git clone https://github.com/bffs-wow/loot.git "$REPO_DIR"
+git clone "$(clone_url)" "$REPO_DIR"
 
 cd "$REPO_DIR"
 git checkout gh-pages
