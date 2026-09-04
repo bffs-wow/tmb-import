@@ -322,8 +322,12 @@ async function main() {
     process.exit(0);
   }
 
+  // A change is real only when there is new loot, a wishlist diff, or a
+  // character update. `diff.chars` is a distinct-character counter (≥ 1 for
+  // any of those) and is intentionally NOT counted here, so an unchanged
+  // payload stays silent instead of posting an empty summary.
   const changedCount =
-    diff.newReceived.length + diff.metaChanged.length + (diff.wishlistChanged ? 1 : 0) + (diff.chars ? 1 : 0);
+    diff.newReceived.length + diff.metaChanged.length + (diff.wishlistChanged ? 1 : 0);
 
   if (!changedCount) {
     console.log(`ℹ️  No data change between ${previousFile} and ${newerFile} — no notification.`);
