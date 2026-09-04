@@ -197,10 +197,6 @@ function buildEmbed(diff) {
     addField("📝 Wishlists", `${wishlistChanged} wishlist item${wishlistChanged === 1 ? "" : "s"} changed`, true);
   }
 
-  if (embed.fields.length === 0) {
-    addField("Summary", "No notable field-level changes in this import.");
-  }
-
   return embed;
 }
 
@@ -317,20 +313,20 @@ async function main() {
   const { newer, previous, newerFile, previousFile } = loadInputs();
   const diff = computeDiff(previous, newer);
 
-  if (!webhookUrl && !process.env.DUMP_EMBED) {
-    console.log("ℹ️  DISCORD_WEBHOOK_URL not set — skipping notification.");
-    process.exit(0);
-  }
-
   // A change is real only when there is new loot, a wishlist diff, or a
-  // character update. `diff.chars` is a distinct-character counter (≥ 1 for
-  // any of those) and is intentionally NOT counted here, so an unchanged
-  // payload stays silent instead of posting an empty summary.
+  // character update. Note diff.chars is a distinct-character counter (>= 1
+  // whenever any change is detected) and must NOT be counted here — an import
+  // whose data payload is unchanged must stay fully silent.
   const changedCount =
     diff.newReceived.length + diff.metaChanged.length + (diff.wishlistChanged ? 1 : 0);
 
   if (!changedCount) {
     console.log(`ℹ️  No data change between ${previousFile} and ${newerFile} — no notification.`);
+    process.exit(0);
+  }
+
+  if (!webhookUrl && !process.env.DUMP_EMBED) {
+    console.log("ℹ️  DISCORD_WEBHOOK_URL not set — skipping notification.");
     process.exit(0);
   }
 
