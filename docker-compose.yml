@@ -7,6 +7,9 @@ services:
       - GIT_CONFIG_COUNT=1
       - GIT_CONFIG_KEY_0=safe.directory
       - GIT_CONFIG_VALUE_0=/app/repo
+      # Discord webhook URL for post-import notifications (set in the host .env).
+      # If unset, the import skips notification.
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
     volumes:
       - ./config.yaml:/app/config.yaml:ro
       - ./repo:/app/repo

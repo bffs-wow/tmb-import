@@ -15,3 +15,15 @@ EXPORT_ITEMS_URL=https://thatsmybis.com/YOUR/GUILD/PATH/export/item-notes/html
 ```
 
 Each `EXPORT_.._URL` key is optional. If it is missing, that export won't occur.
+
+## Discord notifications
+
+After a successful import, if the downloaded `data` payload changed since the
+previous snapshot, the pipeline posts a Discord notification summarising the
+changes (new received items, wishlist changes, character updates) with links to
+the relevant ThatsMyBis pages and Wowhead.
+
+The webhook URL is supplied to the container through the `DISCORD_WEBHOOK_URL`
+environment variable (homelab convention: set it in the host `.env` next to the
+compose file — never commit it). If it is unset, the import simply skips the
+notification; an import with no data change is always silent.
