@@ -109,13 +109,13 @@ Add these lines at the bottom:
 
 Code snippet
 
-# TMB-Import: Every 15m (Tue/Thu 4PM-11:45PM)
+# TMB-Import: Every 15m (Tue/Thu 4PM-midnight, covers raid window)
 
-_/15 16-23 _ \* 2,4 /usr/bin/docker compose -f /home/sean/homelab/tmb-import/docker-compose.yml run --rm tmb-import >> /home/sean/homelab/tmb-import/cron.log 2>&1
+*/15 16-0 * * 2,4 /usr/bin/docker compose -f /home/sean/homelab/tmb-import/docker-compose.yml run --rm tmb-import >> /home/sean/homelab/tmb-import/cron.log 2>&1
 
-# TMB-Import: Every 2h (Daily 10AM-11PM)
+# TMB-Import: Every 2h (Daily 10AM-midnight)
 
-0 10-23/2 \* \* \* /usr/bin/docker compose -f /home/sean/homelab/tmb-import/docker-compose.yml run --rm tmb-import >> /home/sean/homelab/tmb-import/cron.log 2>&1
+0 10-0/2 * * * /usr/bin/docker compose -f /home/sean/homelab/tmb-import/docker-compose.yml run --rm tmb-import >> /home/sean/homelab/tmb-import/cron.log 2>&1
 
 8. Troubleshooting
 

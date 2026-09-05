@@ -164,25 +164,34 @@ function buildEmbed(diff) {
     embed.fields.push({ name, value: value || "—", inline });
   };
 
-  const grouped = new Map();
+  // Group received items by raid (a single raid per import is typical, but
+  // support many). Within each raid, list the character (linked) per line so
+  // the loot is attributed without repeating the raid on every line.
+  const byRaid = new Map();
   for (const item of newReceived) {
-    const cid = item.pivot && item.pivot.character_id;
-    const list = grouped.get(cid) || [];
-    list.push(item);
-    grouped.set(cid, list);
+    const pivot = item.pivot || {};
+    const raidId = pivot.raid_id || "unknown";
+    const entry = byRaid.get(raidId) || { name: item.raid_name || "Unknown raid", slug: item.raid_slug || "", items: [] };
+    entry.items.push(item);
+    byRaid.set(raidId, entry);
   }
 
-  for (const [cid, items] of grouped) {
-    const c = diff.charsById.get(cid);
-    const lines = items.map((it) => {
+  for (const [raidId, raid] of byRaid) {
+    const raidUrl =
+      raidId !== "unknown" ? `${GUILD_HOME}/raids/${raidId}/${encodeURIComponent(raid.slug)}` : null;
+    const name = raidUrl ? `[${raid.name}](${raidUrl})` : raid.name;
+    const lines = raid.items.map((it) => {
+      const c = diff.charsById.get(it.pivot && it.pivot.character_id);
+      const who = c
+        ? `**${c.name}**`
+        : it.pivot && it.pivot.character_id
+          ? `Character ${it.pivot.character_id}`
+          : "Unknown";
       const wowhead = `https://www.wowhead.com/mop-classic/item=${it.item_id}`;
-      const label = `[${it.name}](${wowhead})`;
-      const raid = it.pivot && it.pivot.raid_id ? `${GUILD_HOME}/raids/${it.pivot.raid_id}/${encodeURIComponent(it.raid_slug || "")}` : null;
-      const raidText = raid ? ` · [${it.raid_name || "raid"}](${raid})` : it.raid_name ? ` · ${it.raid_name}` : "";
+      const itemLabel = `[${it.name}](${wowhead})`;
       const note = it.pivot && it.pivot.note ? ` — *${it.pivot.note}*` : "";
-      return `• ${label}${raidText}${note}`;
+      return `• ${who} — ${itemLabel}${note}`;
     });
-    const name = c ? (c.slug ? `[${c.name}](${charLink(c)})` : c.name) : `Character ${cid}`;
     addField(name, lines.join("\n"));
   }
 

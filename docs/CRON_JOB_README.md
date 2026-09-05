@@ -72,6 +72,22 @@ Add the following lines to the crontab. Replace `/opt/tmb-import` with the actua
 0 */2 10-23 * * * /usr/local/bin/docker compose -f /opt/tmb-import/docker-compose.yml run --rm tmb-import
 ```
 
+**Tuning for your raid schedule (Tue/Thu ~11:00–11:15pm):**
+
+Imports normally land right after raids on Tuesday and Thursday evenings (~11:00–11:15pm). To guarantee a run lands inside that window shortly after loot is added without a separate line, extend the Tue/Thu window to run through midnight and the daily window to also fall back to midnight:
+
+```cron
+# Run every 15 minutes on Tue/Thu 4pm–midnight (covers the raid window)
+*/15 16-0 * * 2,4 /usr/local/bin/docker compose -f /opt/tmb-import/docker-compose.yml run --rm tmb-import
+
+# Daily fallback: every 2 hours 10am–midnight (prevents stale data on non-raid days)
+0 10-0/2 * * * /usr/local/bin/docker compose -f /opt/tmb-import/docker-compose.yml run --rm tmb-import
+```
+
+**Timezones:** `cron` uses the **host server's** timezone, not the container's (the container itself is UTC). Confirm the host timezone with `date` and the active lines with `crontab -l`. If the server is UTC, adjust the hour ranges by your UTC offset — the goal is `16–0` to cover `4pm–midnight` in **the host's local time**.
+
+That `16-0`/`10-0` window means the last run fires at (or just after) 11:15pm raid time and continues until midnight — the 7-hour gap that previously existed overnight (no runs between ~11:45pm and ~10am) is closed.
+
 **Explanation of Cron Syntax:**
 
 A cron entry has five time fields followed by the command to execute:
