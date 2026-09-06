@@ -16,6 +16,20 @@ EXPORT_ITEMS_URL=https://thatsmybis.com/YOUR/GUILD/PATH/export/item-notes/html
 
 Each `EXPORT_.._URL` key is optional. If it is missing, that export won't occur.
 
+## Deployment
+
+This is a **public** repo, so the homelab deploy pipeline deliberately uses no
+GitHub secrets. On every push/merge to `main`, a workflow
+(`.github/workflows/deploy.yml`) runs on the bffs-wow **org self-hosted runner**
+(`arthur-server-bffs`) and invokes the homelab deploy-agent scoped to this app
+(`--only tmb-import`). The agent pulls this repo from its public URL into
+`~/homelab/tmb-import` and rebuilds/restarts the job container. Fork PRs never
+run on the self-hosted runner; only merges to `main` do.
+
+Recurring imports are scheduled on the **host** cron (declared centrally by the
+homelab `scripts/install-homelab-cron.sh` — see `docs/CRON_JOB_README.md` for the
+schedule rationale).
+
 ## Discord notifications
 
 After a successful import, if the downloaded `data` payload changed since the

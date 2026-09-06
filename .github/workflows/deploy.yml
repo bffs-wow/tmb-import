@@ -1,0 +1,32 @@
+# Event-driven deploy: merging to main = deploy authorization.
+# Runs on the BFFS org self-hosted runner (arthur-server-bffs), which is the
+# only entity that can see org-level workflows for bffs-wow.
+# No secrets: this repo is PUBLIC, so no DISPATCH_TOKEN here — the runner is
+# our box and invokes the canonical homelab deploy-agent, which pulls the
+# code (public URL) and applies it on the host.
+
+# SECURITY: this workflow runs on the self-hosted runner — ONLY `push` to `main`
+# (i.e. merged PRs / direct hotfixes on the protected branch). NEVER `pull_request`
+# (fork PRs would execute repo code on our server). See homelab patterns.md.
+
+name: deploy
+"on":
+  push:
+    branches: [main]
+  # allow a manual re-apply from the UI/CLI
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: [self-hosted, bffs]
+    steps:
+      - name: Run homelab deploy-agent for tmb-import
+        run: |
+          # Mirror homelab deploy.yml: run from the canonical ~/homelab/ops clone
+          # (fresh git pull each job) and scope to just this app. --only matches
+          # the URL entry's basename (tmb-import) in deploy-manifest.yml.
+          cd ~/homelab/ops && git pull --ff-only
+          bash ~/homelab/ops/scripts/deploy-agent.sh --only tmb-import
