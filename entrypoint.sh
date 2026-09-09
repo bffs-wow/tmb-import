@@ -20,14 +20,26 @@ rm -rf /app/user_data/Default/Service\ Worker/*
 rm -rf /app/user_data/Default/WebStorage/*
 
 # 2. Prevent overlapping runs. flock is a kernel-level lock on the lockfile, so
-# a stale file left by a SIGKILLed run (reboot, docker kill, OOM) can never wedge
-# future imports — the next run acquires the lock immediately and self-heals.
+# a stale file left by a SIGKILLed run (reboot, docker kill, OOM) has no holder
+# and the next run acquires the lock immediately (self-healing). A live-but-
+# wedged holder (entrypoint has no per-step timeout, e.g. a hung git clone)
+# would hold flock indefinitely, so an aged lock file is additionally treated as
+# defunct and broken. Legitimate runs are hard-capped at ~8 min (5-min watchdog
+# in src/app.js + git steps), so 10 minutes is a safe ceiling.
 LOCKFILE="/app/temp/tmb-import.lock"
-exec 9>"$LOCKFILE"
-if ! flock -n 9; then
-    log "⚠️ Another import is already running (Lockfile exists). Exiting."
-    exit 0
-fi
+LOCK_TTL_MINUTES=10
+# >> (append) so probing never truncates/refreshes a live holder's mtime
+exec 9>>"$LOCKFILE"
+while ! flock -n 9; do
+    if [ -n "$(find "$LOCKFILE" -mmin +"$LOCK_TTL_MINUTES" 2>/dev/null)" ]; then
+        log "⚠️ Lockfile is ${LOCK_TTL_MINUTES}m+ old (holder wedged). Breaking stale lock..."
+        rm -f "$LOCKFILE"
+        exec 9>>"$LOCKFILE"
+    else
+        log "⚠️ Another import is already running (Lockfile exists). Exiting."
+        exit 0
+    fi
+done
 # Remove our own lockfile on exit (a leftover file is harmless, but keep temp clean)
 trap 'rm -f "$LOCKFILE"' INT TERM EXIT
 
