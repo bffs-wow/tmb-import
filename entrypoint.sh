@@ -73,19 +73,24 @@ clone_url() {
   echo "$url"
 }
 
-# Always clean the repo directory to avoid corrupted state from previous runs.
-# The repo dir is a bind mount point (/app/repo), so it can't be removed —
-# empty it instead; git clone needs a clean/empty target either way.
-if [ -d "$REPO_DIR" ]; then
-  log "🧹 Emptying old repository directory to ensure a clean clone..."
-  find "$REPO_DIR" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+# Always deliver a clean gh-pages checkout, but avoid re-downloading the whole
+# history every run. Use a reusable partial clone (blob:none + depth 1): the
+# working repo holds only the tree/commit metadata, and each blob is fetched
+# lazily on first access — so updating one assets/tmb-data.json pulls just that
+# file. A fresh clone is ~0.5 MiB instead of ~88 MiB.
+if [ -d "$REPO_DIR/.git" ]; then
+  log "🔄 Reusing partial clone; fetching latest gh-pages..."
+  if ! (cd "$REPO_DIR" && git checkout gh-pages -q && git pull --ff-only origin gh-pages -q); then
+    log "⚠️ Pull failed (checkout may be corrupted). Re-cloning fresh..."
+    find "$REPO_DIR" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+    git clone --depth 1 --filter=blob:none --single-branch --branch gh-pages "$(clone_url)" "$REPO_DIR"
+  fi
+else
+  log "🚚 Cloning repository (partial: trees only, blobs fetched lazily)..."
+  git clone --depth 1 --filter=blob:none --single-branch --branch gh-pages "$(clone_url)" "$REPO_DIR"
 fi
 
-log "🚚 Cloning repository..."
-git clone "$(clone_url)" "$REPO_DIR"
-
 cd "$REPO_DIR"
-git checkout gh-pages
 
 # Keep a copy of the previously committed snapshot for the diff/notification step
 if [ -f assets/tmb-data.json ]; then

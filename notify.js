@@ -24,6 +24,11 @@ const MAX_EMBED_CHARS = 6000;
 
 const GUILD_HOME = "https://thatsmybis.com/22344/best-friends";
 
+// Catch-all character used for rotted gear. We do NOT care what it receives, so
+// it is excluded from the diff/notification only — the published JSON snapshot
+// keeps it untouched.
+const IGNORED_CHARACTERS = new Set(["_disenchanted"]);
+
 // ---------------------------------------------------------------------------
 // Load the two snapshots
 
@@ -38,7 +43,9 @@ function readSnapshot(file) {
   if (!Array.isArray(parsed.data)) {
     throw new Error(`Snapshot ${file} has no "data" array`);
   }
-  return parsed.data;
+  // Only the notification diff ignores the catch-all character; the published
+  // snapshot keeps every character.
+  return parsed.data.filter((c) => !IGNORED_CHARACTERS.has(c.name));
 }
 
 function loadInputs() {
