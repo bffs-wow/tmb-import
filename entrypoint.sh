@@ -19,16 +19,17 @@ rm -rf /app/user_data/Default/Code\ Cache/*
 rm -rf /app/user_data/Default/Service\ Worker/*
 rm -rf /app/user_data/Default/WebStorage/*
 
-# 2. Prevent overlapping runs (The Lockfile check)
+# 2. Prevent overlapping runs. flock is a kernel-level lock on the lockfile, so
+# a stale file left by a SIGKILLed run (reboot, docker kill, OOM) can never wedge
+# future imports — the next run acquires the lock immediately and self-heals.
 LOCKFILE="/app/temp/tmb-import.lock"
-if [ -f "$LOCKFILE" ]; then
+exec 9>"$LOCKFILE"
+if ! flock -n 9; then
     log "⚠️ Another import is already running (Lockfile exists). Exiting."
     exit 0
 fi
-
-touch "$LOCKFILE"
-# Ensure we remove our own lockfile even if the script fails
-trap 'rm -f "$LOCKFILE"; exit' INT TERM EXIT
+# Remove our own lockfile on exit (a leftover file is harmless, but keep temp clean)
+trap 'rm -f "$LOCKFILE"' INT TERM EXIT
 
 # 3. Run the App
 node src/app.js
