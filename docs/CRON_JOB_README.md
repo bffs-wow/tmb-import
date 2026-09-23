@@ -1,5 +1,7 @@
 # Cron Job Setup for Ubuntu
 
+> **Notice (Cron Truth Model):** [`cron.yaml`](../cron.yaml) at the repository root is now the single source of truth for all `tmb-import` cron schedules (cron truth model, homelab #45). Host crontabs are automatically generated and reconciled by centralized homelab tooling (`scripts/install-homelab-cron.sh` / `deploy-agent.sh`). Manual crontab configuration is deprecated.
+
 This document outlines how to set up a cron job on an Ubuntu server to run the `tmb-import` Docker service at regular intervals, replacing the functionality of the Windows Scheduled Task.
 
 ## Prerequisites
@@ -49,7 +51,9 @@ If your Git repository for `loot.git` is private or requires authentication for 
 - **HTTPS with Personal Access Token:**
   - You can embed a GitHub Personal Access Token (PAT) in the Git remote URL (e.g., `https://<YOUR_PAT>@github.com/bffs-wow/loot.git`). This is generally less secure than SSH keys.
 
-## 4. Schedule with Cron
+## 4. Schedule with Cron (DEPRECATED)
+
+> **DEPRECATED:** Manual crontab entries are deprecated in favor of declarative schedules in [`cron.yaml`](../cron.yaml) managed centrally via the homelab cron truth model (`scripts/install-homelab-cron.sh`). The instructions below are preserved for historical reference only.
 
 The original Windows Scheduled Task had two triggers:
 

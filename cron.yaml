@@ -6,9 +6,9 @@ jobs:
   - name: tmb-import-raid
     schedule: "*/15 16-23 * * 2,4"
     command: "cd /home/sean/homelab/tmb-import && docker compose run --rm tmb-import >> /tmp/tmb-import.log 2>&1"
-    description: "Scheduled raid window import (Tue/Thu)"
+    description: "Tue/Thu raid window: every 15min 4pm-midnight"
 
   - name: tmb-import-daily
     schedule: "0 10-23/2 * * *"
     command: "cd /home/sean/homelab/tmb-import && docker compose run --rm tmb-import >> /tmp/tmb-import.log 2>&1"
-    description: "Daily catch-up import"
+    description: "Daily fallback: every 2h 10am-midnight (no stale data on non-raid days)"
