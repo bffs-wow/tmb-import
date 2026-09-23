@@ -2,6 +2,7 @@
 
 ## What works:
 
+- **Cron truth adoption (PR #13, 2026-09-23):** `cron.yaml` at repo root is the single source of truth for both import schedules; host crontab reconciled by `seanmarthur/homelab` installer (issue #9 closed).
 - **Docker setup:** `Dockerfile` and `docker-compose.yml` are created and correctly configured for building the image and running the service.
 - **Configuration management:** `config.example.yaml` is provided, and `config.yaml` is added to `.gitignore`, ensuring secure handling of sensitive data.
 - **Application adaptation:** `src/app.js` is successfully modified to read configuration from `config.yaml`.
@@ -10,7 +11,7 @@
 
 ## What's left to build:
 
-- No further code changes or new files are required based on the initial request and subsequent refinements.
+- No further code changes or new files are required based on the initial request and subsequent refinements. Future schedule changes = edit `cron.yaml` via PR; deploy-agent reconciles the host crontab automatically.
 
 ## Current status:
 

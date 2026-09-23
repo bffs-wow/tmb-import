@@ -1,14 +1,15 @@
-# Active Context: TMB Import Dockerization
+# Active Context: TMB Import Dockerization + Cron Truth
 
 ## Current work focus:
 
 - Completed the dockerization of the `tmb-import` application.
 - Migrated configuration from `.env` to `config.yaml`.
 - Replaced the Windows `task.bat` with a `entrypoint.sh` script.
-- Provided documentation for setting up cron jobs on Ubuntu.
+- Declared cron schedules in repo-root `cron.yaml` (cron truth model, homelab #45) — schedules no longer hardcoded in the host installer.
 
 ## Recent changes:
 
+- **`cron.yaml` created (PR #13):** Declares the two schedules (raid window `*/15 16-23 * * 2,4` + daily fallback `0 10-23/2 * * *`) matching the deployed host crontab byte-for-byte. Centralized enforcement/environment via `seanmarthur/homelab` installer; manual crontab docs marked DEPRECATED in `docs/CRON_JOB_README.md`.
 - **`Dockerfile` created:** Defines the Node.js 18 alpine environment, installs `git` and `openssh-client`, copies application files, installs dependencies, creates a `temp` directory, and sets `entrypoint.sh` as the command.
 - **`docker-compose.yml` created:** Defines the `tmb-import` service, builds from the local Dockerfile, and mounts `config.yaml`, `repo`, and `temp` directories.
 - **`config.example.yaml` created:** Provides a template for sensitive configuration values (`DISCORD_TOKEN`, `EXPORT_DATA_URL`, `EXPORT_ITEMS_URL`).
