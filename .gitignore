@@ -3,3 +3,5 @@ repo
 temp
 node_modules
 config.yaml.pi/
+
+.pi/
