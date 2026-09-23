@@ -1,0 +1,14 @@
+# Cron schedule declarations for tmb-import (cron truth model, ADR-0001 / homelab #45).
+# Centralized enforcement lives in seanmarthur/homelab (scripts/install-homelab-cron.sh).
+# Deploy-agent reconciles the host crontab automatically after deploy.
+version: "1"
+jobs:
+  - name: tmb-import-raid
+    schedule: "*/15 16-23 * * 2,4"
+    command: "cd /home/sean/homelab/tmb-import && docker compose run --rm tmb-import >> /tmp/tmb-import.log 2>&1"
+    description: "Scheduled raid window import (Tue/Thu)"
+
+  - name: tmb-import-daily
+    schedule: "0 10-23/2 * * *"
+    command: "cd /home/sean/homelab/tmb-import && docker compose run --rm tmb-import >> /tmp/tmb-import.log 2>&1"
+    description: "Daily catch-up import"
