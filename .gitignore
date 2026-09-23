@@ -2,4 +2,4 @@ repo
 .env
 temp
 node_modules
-config.yaml
+config.yaml.pi/
