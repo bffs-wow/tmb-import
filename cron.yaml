@@ -2,13 +2,19 @@
 # Centralized enforcement lives in seanmarthur/homelab (scripts/install-homelab-cron.sh).
 # Deploy-agent reconciles the host crontab automatically after deploy.
 version: "1"
-jobs:
-  - name: tmb-import-raid
-    schedule: "*/15 16-23 * * 2,4"
-    command: "cd /home/sean/homelab/tmb-import && docker compose run --rm tmb-import >> /tmp/tmb-import.log 2>&1"
-    description: "Tue/Thu raid window: every 15min 4pm-midnight"
 
-  - name: tmb-import-daily
-    schedule: "0 10-23/2 * * *"
-    command: "cd /home/sean/homelab/tmb-import && docker compose run --rm tmb-import >> /tmp/tmb-import.log 2>&1"
-    description: "Daily fallback: every 2h 10am-midnight (no stale data on non-raid days)"
+# DISABLED for the off-season (2026-09-27): raiding finished until the next
+# release, so the import no longer needs to run. To re-enable, restore the two
+# job blocks below (uncomment) and PR. jobs: [] means the installer emits no
+# tmb-import crontab lines.
+jobs: []
+
+#  - name: tmb-import-raid
+#    schedule: "*/15 16-23 * * 2,4"
+#    command: "cd /home/sean/homelab/tmb-import && docker compose run --rm tmb-import >> /tmp/tmb-import.log 2>&1"
+#    description: "Tue/Thu raid window: every 15min 4pm-midnight"
+#
+#  - name: tmb-import-daily
+#    schedule: "0 10-23/2 * * *"
+#    command: "cd /home/sean/homelab/tmb-import && docker compose run --rm tmb-import >> /tmp/tmb-import.log 2>&1"
+#    description: "Daily fallback: every 2h 10am-midnight (no stale data on non-raid days)"
